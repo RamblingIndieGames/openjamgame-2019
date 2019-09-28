@@ -3,6 +3,8 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 
+#include "testmap.h"
+
 #define SCREEN_WIDTH 640
 #define SCREEN_HEIGHT 480
 
@@ -227,7 +229,32 @@ int main(int argc, char* argv[]) {
   }
 
   SDL_RenderSetLogicalSize(renderer, SCREEN_WIDTH, SCREEN_HEIGHT);
-  SDL_MaximizeWindow(window);
+  // SDL_MaximizeWindow(window);
+
+  // tilemap demo
+  u8* map_data = testmap_data;
+  u8 map_width = testmap_width;
+  u8 map_height = testmap_height;
+  u16 map_size = map_width * map_height;
+  u8 map_layers = 4; // BG, MG, FG, Collision
+
+  SDL_Texture* testmaptiles_texture = load_texture(renderer, "../../data/testmaptiles.png");
+  if (!testmaptiles_texture) {
+    SDL_Log("Resource load failure\n");
+    return EXIT_FAILURE;
+  }
+
+  u8 tile_width = 32;
+  u8 tile_height = 32;
+  u8 tiles_across_set = 7;
+
+  SDL_Rect tile_src_rect;
+  SDL_Rect tile_dest_rect;
+
+  tile_src_rect.w = tile_width;
+  tile_src_rect.h = tile_height;
+  tile_dest_rect.w = tile_width;
+  tile_dest_rect.h = tile_height;
 
   while (is_running) {
     while (SDL_PollEvent(&event)) {
@@ -243,15 +270,48 @@ int main(int argc, char* argv[]) {
     SDL_SetRenderDrawColor(renderer, 0x30, 0x60, 0x90, 0xFF);
     SDL_RenderClear(renderer);
 
-    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_ADD);
-    SDL_RenderCopy(renderer, logo_texture, 0, 0);
-    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
+    // SDL_RenderCopy(renderer, logo_texture, 0, 0);
+
+    for (u16 i = 0; i < map_size; i++) {
+      u8 tile_x = i % map_width;
+      u8 tile_y = i / map_width;
+
+      tile_dest_rect.x = tile_x * tile_width;
+      tile_dest_rect.y = tile_y * tile_height;
+
+      u8 bg_tile_id = map_data[i];
+      u8 mg_tile_id = map_data[(map_size * 1) + i];
+      u8 fg_tile_id = map_data[(map_size * 2) + i];
+      u8 xx_tile_id = map_data[(map_size * 3) + i];
+
+      tile_src_rect.x = tile_width * ((bg_tile_id - 1) % tiles_across_set);
+      tile_src_rect.y = tile_height * ((bg_tile_id - 1) / tiles_across_set);
+
+      SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
+      SDL_RenderCopy(renderer, testmaptiles_texture, &tile_src_rect, &tile_dest_rect);
+      SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+      if (mg_tile_id > 0) {
+        tile_src_rect.x = tile_width * ((mg_tile_id - 1) % tiles_across_set);
+        tile_src_rect.y = tile_height * ((mg_tile_id - 1) / tiles_across_set);
+        SDL_RenderCopy(renderer, testmaptiles_texture, &tile_src_rect, &tile_dest_rect);
+      }
+      if (fg_tile_id > 0) {
+        tile_src_rect.x = tile_width * ((fg_tile_id - 1) % tiles_across_set);
+        tile_src_rect.y = tile_height * ((fg_tile_id - 1) / tiles_across_set);
+        SDL_RenderCopy(renderer, testmaptiles_texture, &tile_src_rect, &tile_dest_rect);
+      }
+      if (xx_tile_id > 0) {
+        SDL_SetRenderDrawColor(renderer, 255, 0, 0, 0x40);
+        SDL_RenderFillRect(renderer, &tile_dest_rect);
+      }
+    }
 
     input_debug_state(&input_player_one, renderer);
 
     SDL_RenderPresent(renderer);
   }
 
+  kill_texture(testmaptiles_texture);
   kill_texture(logo_texture);
 
   SDL_DestroyRenderer(renderer);
