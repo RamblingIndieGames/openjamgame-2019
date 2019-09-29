@@ -272,7 +272,7 @@ void update_play_scene(float dt) {
     sprite_select_animation(player, 3);
   }
 
-  float speed = 128.0f;
+  float speed = tile_width * 8;
   float motion_x = sprite_mt[sprite_mm[sprite_mcc]] * speed * dt;
   float motion_y = sprite_mt[sprite_mm[sprite_mcc + 1]] * speed * dt;
 

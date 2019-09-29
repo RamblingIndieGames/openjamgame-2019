@@ -187,9 +187,9 @@ void render_tilemap_xx() {
 
 void lock_camera_to_map() {
   int map_width_in_pixels = map_columns * tile_width;
-  int map_height_in_pixels = map_columns * tile_height;
+  int map_height_in_pixels = map_rows * tile_height;
   int cam_width_in_pixels = cam_width * tile_width;
-  int cam_height_in_pixels = cam_width * tile_height;
+  int cam_height_in_pixels = cam_height * tile_height;
 
   cam_x = clamp(cam_x, 0, map_width_in_pixels - cam_width_in_pixels);
   cam_y = clamp(cam_y, 0, map_height_in_pixels - cam_height_in_pixels);
@@ -201,7 +201,7 @@ void lock_sprite_to_map(struct sprite_t* sprite) {
   }
 
   int map_width_in_pixels = map_columns * tile_width;
-  int map_height_in_pixels = map_columns * tile_height;
+  int map_height_in_pixels = map_rows * tile_height;
 
   sprite->world_x = clamp(sprite->world_x, 0, map_width_in_pixels - sprite->render_frame_width);
   sprite->world_y = clamp(sprite->world_y, 0, map_height_in_pixels - sprite->render_frame_height);
@@ -209,7 +209,7 @@ void lock_sprite_to_map(struct sprite_t* sprite) {
 
 void lock_camera_to_pos(int x, int y) {
   int cam_width_in_pixels = cam_width * tile_width;
-  int cam_height_in_pixels = cam_width * tile_height;
+  int cam_height_in_pixels = cam_height * tile_height;
   cam_x = x - (cam_width_in_pixels / 2);
   cam_y = y - (cam_height_in_pixels / 2);
   lock_camera_to_map();

@@ -1,6 +1,7 @@
 #include "game.h"
 #include "sprite.h"
 #include "texture_cache.h"
+#include "tilemap.h"
 
 static unsigned int sprite_mm_data[] = { 0, 0, 1, 3, 1, 2, 0, 0, 3, 1, 5, 5, 5, 4, 0, 0, 2, 1, 4, 5, 4, 4 };
 static float sprite_mt_data[] = { 0, 0.0f, 1.0f, -1.0f, 0.7071067811865475f, -0.7071067811865475f };
@@ -169,8 +170,8 @@ void sprite_render(spr* sprite) {
   render_src_rect.y = (sprite->animation_frame_index / (sprite->render_texture_width / render_src_rect.w)) * render_src_rect.h;
 
   // FIXME: the camera is going to need to come into play to determine if the sprite should be rendered and where
-  render_dest_rect.x = sprite->world_x;
-  render_dest_rect.y = sprite->world_y;
+  render_dest_rect.x = sprite->world_x - cam_x;
+  render_dest_rect.y = sprite->world_y - cam_y;
 
   SDL_RenderCopy(main_renderer_ptr, render_texture, &render_src_rect, &render_dest_rect);
 }
