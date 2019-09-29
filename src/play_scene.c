@@ -6,6 +6,8 @@
 
 struct play_data_t {
   struct sprite_t* player_sprite;
+  struct sprite_t* player_sword_sprite;
+  struct sprite_t* slime_sprite;
 };
 struct play_data_t play_data;
 
@@ -205,6 +207,31 @@ void init_play_scene() {
   cam_x = 0;
   cam_y = 0;
 
+  add_texture_to_cache(110, "../../data/testswordsprite.png");
+
+  play_data.player_sword_sprite = sprite_create(110, 32, 17);
+  play_data.player_sword_sprite->hitbox_width = 32;
+  play_data.player_sword_sprite->hitbox_height = 17;
+  sprite_add_animation(play_data.player_sword_sprite, 0, 1, 1);
+  sprite_select_animation(play_data.player_sword_sprite, 0);
+  sprite_start_animation(play_data.player_sword_sprite);
+
+  add_texture_to_cache(200, "../../data/testslimesprite.png");
+
+  play_data.slime_sprite = sprite_create(200, 32, 32);
+  play_data.slime_sprite->hitbox_width = tile_width + 2;
+  play_data.slime_sprite->hitbox_height = tile_height + 2;
+  play_data.slime_sprite->hitbox_x = -1;
+  play_data.slime_sprite->hitbox_y = -1;
+
+  play_data.slime_sprite->world_x = tile_width * 34;
+  play_data.slime_sprite->world_y = tile_height * 10;
+
+  sprite_add_animation(play_data.slime_sprite, 0, 4, 24);
+  sprite_add_animation(play_data.slime_sprite, 3, 2, 1);
+  sprite_select_animation(play_data.slime_sprite, 0);
+  sprite_start_animation(play_data.slime_sprite);
+
   add_texture_to_cache(100, "../../data/testplayersprite.png");
 
   play_data.player_sprite = sprite_create(100, 32, 64);
@@ -217,10 +244,10 @@ void init_play_scene() {
   play_data.player_sprite->world_x = tile_width * 6;
   play_data.player_sprite->world_y = tile_height * 6;
 
-  sprite_add_animation(play_data.player_sprite, 0, 4, 12);
-  // sprite_add_animation(play_data.player_sprite, 0, 4, 12);
-  // sprite_add_animation(play_data.player_sprite, 0, 4, 12);
-  // sprite_add_animation(play_data.player_sprite, 0, 4, 12);
+  sprite_add_animation(play_data.player_sprite, 0, 1, 12);
+  sprite_add_animation(play_data.player_sprite, 1, 1, 12);
+  sprite_add_animation(play_data.player_sprite, 2, 1, 12);
+  sprite_add_animation(play_data.player_sprite, 3, 1, 12);
 
   sprite_select_animation(play_data.player_sprite, 0);
 
@@ -229,6 +256,8 @@ void init_play_scene() {
 }
 
 void destroy_play_scene() {
+  sprite_destroy(&play_data.player_sword_sprite);
+  sprite_destroy(&play_data.slime_sprite);
   sprite_destroy(&play_data.player_sprite);
   destroy_texture_cache();
   destroy_tilemap();
@@ -308,6 +337,32 @@ void update_play_scene(float dt) {
   int player_center_x = player->world_x + (player->render_frame_width / 2);
   int player_center_y = player->world_y + (player->render_frame_height / 2);
   lock_camera_to_pos(player_center_x, player_center_y);
+
+
+  play_data.player_sword_sprite->world_x = player->world_x;
+  play_data.player_sword_sprite->world_y = player->world_y;
+
+  int hw = play_data.player_sword_sprite->hitbox_width;
+  int hh = play_data.player_sword_sprite->hitbox_height;
+
+  if (player->animation_index == 0) {
+    play_data.player_sword_sprite->angle_deg = 270;
+    play_data.player_sword_sprite->hitbox_width = hh;
+    play_data.player_sword_sprite->hitbox_height = hw;
+  } else if (player->animation_index == 1) {
+    play_data.player_sword_sprite->angle_deg = 90;
+    play_data.player_sword_sprite->world_y += player->render_frame_height - 16;
+  } else if (player->animation_index == 3) {
+    play_data.player_sword_sprite->angle_deg = 0;
+    play_data.player_sword_sprite->world_x += player->render_frame_width - 8;
+    play_data.player_sword_sprite->world_y += player->render_frame_height / 2;
+  } else if (player->animation_index == 2) {
+    play_data.player_sword_sprite->angle_deg = 180;
+    play_data.player_sword_sprite->world_y += player->render_frame_height / 2;
+    play_data.player_sword_sprite->world_x -= player->render_frame_width;
+  }
+
+  sprite_update_animation(play_data.slime_sprite);
 }
 
 void render_play_scene() {
@@ -316,6 +371,11 @@ void render_play_scene() {
   render_tilemap_bg();
   render_tilemap_mg();
   sprite_render(play_data.player_sprite);
+  sprite_render(play_data.player_sword_sprite);
+  sprite_render_hitbox(play_data.player_sword_sprite);
+
+  sprite_render(play_data.slime_sprite);
+  sprite_render_hitbox(play_data.slime_sprite);
   sprite_render_hitbox(play_data.player_sprite);
   render_tilemap_fg();
   render_tilemap_xx();

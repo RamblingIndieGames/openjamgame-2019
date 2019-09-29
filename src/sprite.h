@@ -6,6 +6,8 @@ extern float* sprite_mt;
 struct sprite_t {
   unsigned int id;
 
+  int angle_deg;
+
   float world_x;
   float world_y;
 

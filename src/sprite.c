@@ -183,7 +183,11 @@ void sprite_render(spr* sprite) {
   render_dest_rect.x = sprite->world_x - cam_x;
   render_dest_rect.y = sprite->world_y - cam_y;
 
-  SDL_RenderCopy(main_renderer_ptr, render_texture, &render_src_rect, &render_dest_rect);
+  if (sprite->angle_deg != 0) {
+    SDL_RenderCopyEx(main_renderer_ptr, render_texture, &render_src_rect, &render_dest_rect, (double)sprite->angle_deg, 0, SDL_FLIP_NONE);
+  } else {
+    SDL_RenderCopy(main_renderer_ptr, render_texture, &render_src_rect, &render_dest_rect);
+  }
 }
 
 void sprite_render_hitbox(spr* sprite) {
