@@ -209,6 +209,9 @@ void init_play_scene() {
 
   play_data.player_sprite = sprite_create(100, 32, 64);
 
+  play_data.player_sprite->world_x = tile_width * 6;
+  play_data.player_sprite->world_y = tile_height * 6;
+
   sprite_add_animation(play_data.player_sprite, 0, 4, 12);
   // sprite_add_animation(play_data.player_sprite, 0, 4, 12);
   // sprite_add_animation(play_data.player_sprite, 0, 4, 12);
@@ -238,25 +241,58 @@ void exit_play_scene() {
 void update_play_scene(float dt) {
   // printf("update_play\n");
 
-  if (game_ptr->input.right) {
-    cam_x += 4;
-  } else if (game_ptr->input.left) {
-    cam_x -= 4;
+  // if (game_ptr->input.right) {
+  //   cam_x += 4;
+  // } else if (game_ptr->input.left) {
+  //   cam_x -= 4;
+  // }
+
+  // if (game_ptr->input.up) {
+  //   cam_y -= 4;
+  // } else if (game_ptr->input.down) {
+  //   cam_y += 4;
+  // }
+
+  unsigned char sprite_mcc = 0;
+  struct input_t* input = &game_ptr->input;
+  struct sprite_t* player = play_data.player_sprite;
+  if (input->up) {
+    sprite_mcc |= 2;
+    sprite_select_animation(player, 0);
+  } else if (input->down) {
+    sprite_mcc |= 4;
+    sprite_select_animation(player, 1);
   }
 
-  if (game_ptr->input.up) {
-    cam_y -= 4;
-  } else if (game_ptr->input.down) {
-    cam_y += 4;
+  if (input->left) {
+    sprite_mcc |= 8;
+    sprite_select_animation(player, 2);
+  } else if (input->right) {
+    sprite_mcc |= 16;
+    sprite_select_animation(player, 3);
   }
 
-  sprite_update_animation(play_data.player_sprite);
+  float speed = 128.0f;
+  float motion_x = sprite_mt[sprite_mm[sprite_mcc]] * speed * dt;
+  float motion_y = sprite_mt[sprite_mm[sprite_mcc + 1]] * speed * dt;
+
+  player->world_x += motion_x;
+  player->world_y += motion_y;
+  lock_sprite_to_map(player);
+
+  sprite_update_animation(player);
+
+  int player_center_x = player->world_x + (player->render_frame_width / 2);
+  int player_center_y = player->world_y + (player->render_frame_height / 2);
+  lock_camera_to_pos(player_center_x, player_center_y);
 }
 
 void render_play_scene() {
   // printf("render_play\n");
 
-  render_tilemap(cam_x, cam_y);
-
+  render_tilemap_bg();
+  render_tilemap_mg();
   sprite_render(play_data.player_sprite);
+  render_tilemap_fg();
+  render_tilemap_xx();
 }

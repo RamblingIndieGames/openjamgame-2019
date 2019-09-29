@@ -1,7 +1,7 @@
 #ifndef __SPRITE_H__
 
 extern unsigned int* sprite_mm;
-extern unsigned int* sprite_mt;
+extern float* sprite_mt;
 
 struct sprite_t {
   unsigned int id;

@@ -1,5 +1,6 @@
 #include "game.h"
 #include "tilemap.h"
+#include "sprite.h"
 
 int tile_width = 32;
 int tile_height = 32;
@@ -52,11 +53,11 @@ void destroy_tilemap() {
   map_rows = 0;
 }
 
-void render_tilemap(int target_x, int target_y) {
-  int map_x = target_x / tile_width;
-  int map_y = target_y / tile_height;
-  int off_x = target_x % tile_width;
-  int off_y = target_y % tile_height;
+void render_tilemap_bg() {
+  int map_x = cam_x / tile_width;
+  int map_y = cam_y / tile_height;
+  int off_x = cam_x % tile_width;
+  int off_y = cam_y % tile_height;
 
   SDL_Rect dst;
   dst.w = tile_width;
@@ -76,6 +77,7 @@ void render_tilemap(int target_x, int target_y) {
     int index = (row + map_y) * map_columns + column + map_x;
     int tile_id = map_bg_data[index];
     if (tile_id > 0) {
+      tile_id--;
       src.x = tile_width * (tile_id % game_ptr->tileset_columns);
       src.y = tile_height * (tile_id / game_ptr->tileset_columns);
       dst.x = column * tile_width - off_x;
@@ -83,20 +85,132 @@ void render_tilemap(int target_x, int target_y) {
       SDL_RenderCopy(main_renderer_ptr, game_ptr->tileset_texture, &src, &dst);
     }
   }
+}
+
+void render_tilemap_mg() {
+  int map_x = cam_x / tile_width;
+  int map_y = cam_y / tile_height;
+  int off_x = cam_x % tile_width;
+  int off_y = cam_y % tile_height;
+
+  SDL_Rect dst;
+  dst.w = tile_width;
+  dst.h = tile_height;
+
+  SDL_Rect src;
+  src.w = tile_width;
+  src.h = tile_height;
+
+  int size = cam_width * cam_height;
 
   SDL_SetRenderDrawBlendMode(main_renderer_ptr, SDL_BLENDMODE_BLEND);
 
-  // for (int row = 0; row < map_rows; row++) {
-  //   for (int column = 0; column < map_columns; column++) {
-  //     int index = (row + map_y) * map_columns + column + map_x;
-  //     int tile_id = map_bg_data[index];
-  //     if (tile_id > 0) {
-  //       src.x = tile_width * (tile_id % game_ptr->tileset_columns);
-  //       src.y = tile_height * (tile_id / game_ptr->tileset_columns);
-  //       dst.x = column * tile_width - off_x;
-  //       dst.y = row * tile_height - off_y;
-  //       SDL_RenderCopy(main_renderer_ptr, game_ptr->tileset_texture, &src, &dst);
-  //     }
-  //   }
-  // }
+  for (int i = 0; i < size; i++) {
+    int column = (i % cam_width);
+    int row = (i / cam_width);
+    int index = (row + map_y) * map_columns + column + map_x;
+    int tile_id = map_mg_data[index];
+    if (tile_id > 0) {
+      tile_id--;
+      src.x = tile_width * (tile_id % game_ptr->tileset_columns);
+      src.y = tile_height * (tile_id / game_ptr->tileset_columns);
+      dst.x = column * tile_width - off_x;
+      dst.y = row * tile_height - off_y;
+      SDL_RenderCopy(main_renderer_ptr, game_ptr->tileset_texture, &src, &dst);
+    }
+  }
+}
+
+void render_tilemap_fg() {
+  int map_x = cam_x / tile_width;
+  int map_y = cam_y / tile_height;
+  int off_x = cam_x % tile_width;
+  int off_y = cam_y % tile_height;
+
+  SDL_Rect dst;
+  dst.w = tile_width;
+  dst.h = tile_height;
+
+  SDL_Rect src;
+  src.w = tile_width;
+  src.h = tile_height;
+
+  int size = cam_width * cam_height;
+
+  SDL_SetRenderDrawBlendMode(main_renderer_ptr, SDL_BLENDMODE_BLEND);
+
+  for (int i = 0; i < size; i++) {
+    int column = (i % cam_width);
+    int row = (i / cam_width);
+    int index = (row + map_y) * map_columns + column + map_x;
+    int tile_id = map_fg_data[index];
+    if (tile_id > 0) {
+      tile_id--;
+      src.x = tile_width * (tile_id % game_ptr->tileset_columns);
+      src.y = tile_height * (tile_id / game_ptr->tileset_columns);
+      dst.x = column * tile_width - off_x;
+      dst.y = row * tile_height - off_y;
+      SDL_RenderCopy(main_renderer_ptr, game_ptr->tileset_texture, &src, &dst);
+    }
+  }
+}
+
+void render_tilemap_xx() {
+  int map_x = cam_x / tile_width;
+  int map_y = cam_y / tile_height;
+  int off_x = cam_x % tile_width;
+  int off_y = cam_y % tile_height;
+
+  SDL_Rect dst;
+  dst.w = tile_width;
+  dst.h = tile_height;
+
+  int size = cam_width * cam_height;
+
+  SDL_SetRenderDrawBlendMode(main_renderer_ptr, SDL_BLENDMODE_BLEND);
+
+  for (int i = 0; i < size; i++) {
+    int column = (i % cam_width);
+    int row = (i / cam_width);
+    int index = (row + map_y) * map_columns + column + map_x;
+    int tile_id = map_xx_data[index];
+    if (tile_id > 0) {
+      dst.x = column * tile_width - off_x;
+      dst.y = row * tile_height - off_y;
+      SDL_SetRenderDrawColor(main_renderer_ptr, 255, 0, 0, 0x40);
+      SDL_RenderFillRect(main_renderer_ptr, &dst);
+    }
+  }
+}
+
+#define clamp(v,lo,hi) ((v) < (lo) ? (lo) : ((v) > (hi) ? (hi) : (v)))
+
+void lock_camera_to_map() {
+  int map_width_in_pixels = map_columns * tile_width;
+  int map_height_in_pixels = map_columns * tile_height;
+  int cam_width_in_pixels = cam_width * tile_width;
+  int cam_height_in_pixels = cam_width * tile_height;
+
+  cam_x = clamp(cam_x, 0, map_width_in_pixels - cam_width_in_pixels);
+  cam_y = clamp(cam_y, 0, map_height_in_pixels - cam_height_in_pixels);
+}
+
+void lock_sprite_to_map(struct sprite_t* sprite) {
+  if (!sprite) {
+    return;
+  }
+
+  int map_width_in_pixels = map_columns * tile_width;
+  int map_height_in_pixels = map_columns * tile_height;
+
+  sprite->world_x = clamp(sprite->world_x, 0, map_width_in_pixels - sprite->render_frame_width);
+  sprite->world_y = clamp(sprite->world_y, 0, map_height_in_pixels - sprite->render_frame_height);
+}
+
+void lock_camera_to_pos(int x, int y) {
+  int cam_width_in_pixels = cam_width * tile_width;
+  int cam_height_in_pixels = cam_width * tile_height;
+  cam_x = x - (cam_width_in_pixels / 2);
+  cam_y = y - (cam_height_in_pixels / 2);
+  lock_camera_to_map();
 }

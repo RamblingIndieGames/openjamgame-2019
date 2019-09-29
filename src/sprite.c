@@ -2,7 +2,17 @@
 #include "sprite.h"
 #include "texture_cache.h"
 
+static unsigned int sprite_mm_data[] = { 0, 0, 1, 3, 1, 2, 0, 0, 3, 1, 5, 5, 5, 4, 0, 0, 2, 1, 4, 5, 4, 4 };
+static float sprite_mt_data[] = { 0, 0.0f, 1.0f, -1.0f, 0.7071067811865475f, -0.7071067811865475f };
+
+unsigned int* sprite_mm;
+float* sprite_mt;
+
 spr* sprite_create(int texture_id, int frame_width, int frame_height) {
+  if (!sprite_mm) {
+    sprite_mm = sprite_mm_data;
+    sprite_mt = sprite_mt_data;
+  }
 
   struct cachedtexture_t* cached_texture = get_texture_by_id(texture_id);
   if (!cached_texture) {
@@ -26,6 +36,7 @@ spr* sprite_create(int texture_id, int frame_width, int frame_height) {
   sprite->render_frame_width = frame_width;
   sprite->render_frame_height = frame_height;
   sprite->animation_loop = 1;
+  sprite->animation_index = -1;
 
   return sprite;
 }
@@ -62,7 +73,7 @@ void sprite_add_animation(spr* sprite, int start, int count, int timeout) {
 }
 
 void sprite_select_animation(spr* sprite, int index) {
-  if (sprite && index < sprite->animation_count) {
+  if (sprite && index < sprite->animation_count && sprite->animation_index != index) {
     sprite->animation_index = index;
     sprite->animation_frame_start = sprite->animations[index * 3];
     sprite->animation_frame_count = sprite->animations[1 + (index * 3)];
