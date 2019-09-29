@@ -1,130 +1,102 @@
-#include "main.h"
+#include "game.h"
+#include "tilemap.h"
 
-void tilemap_render_bg_layer(struct tilemap_context_t* ctx, struct tilemap_camera_t* camera) {
-  SDL_Renderer* renderer = ctx->renderer;
-  SDL_Texture* tileset = ctx->tileset;
-  u8 tileset_tile_count = ctx->tileset_tile_count;
-  u8* map_data = ctx->map_data;
-  u8 map_width = ctx->map_width;
-  u8 map_height = ctx->map_height;
-  u16 map_size = ctx->map_size;
-  u8 tile_width = ctx->tile_width;
-  u8 tile_height = ctx->tile_height;
-  SDL_Rect* tile_src_rect = ctx->tile_src_rect;
-  SDL_Rect* tile_dest_rect = ctx->tile_dest_rect;
+int tile_width = 32;
+int tile_height = 32;
 
-  SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
+int map_columns = 80;
+int map_rows = 60;
 
-  for (u16 i = 0; i < map_size; i++) {
-    u8 tile_x = i % map_width;
-    u8 tile_y = i / map_width;
-    u8 bg_tile_id = map_data[i];
+int* map_bg_data = 0;
+int* map_mg_data = 0;
+int* map_fg_data = 0;
+int* map_xx_data = 0;
 
-    tile_dest_rect->x = tile_x * tile_width;
-    tile_dest_rect->y = tile_y * tile_height;
-    tile_src_rect->x = tile_width * ((bg_tile_id - 1) % tileset_tile_count);
-    tile_src_rect->y = tile_height * ((bg_tile_id - 1) / tileset_tile_count);
-    SDL_RenderCopy(renderer, tileset, tile_src_rect, tile_dest_rect);
+int cam_x = 0;
+int cam_y = 0;
+int cam_width = 21;
+int cam_height = 16;
+
+void create_tilemap_from_array(int columns, int rows, int* arr) {
+  destroy_tilemap();
+
+  map_columns = columns;
+  map_rows = rows;
+
+  int size = map_columns * map_rows;
+  size_t map_alloc_size = sizeof(int) * size;
+
+  map_bg_data = (int*)malloc(map_alloc_size);
+  map_mg_data = (int*)malloc(map_alloc_size);
+  map_fg_data = (int*)malloc(map_alloc_size);
+  map_xx_data = (int*)malloc(map_alloc_size);
+
+  for (int i = 0; i < size; i++) {
+    map_bg_data[i] = arr[i];
+    map_mg_data[i] = arr[(size * 1) + i];
+    map_fg_data[i] = arr[(size * 2) + i];
+    map_xx_data[i] = arr[(size * 3) + i];
   }
 }
 
-void tilemap_render_mg_layer(struct tilemap_context_t* ctx, struct tilemap_camera_t* camera) {
-  SDL_Renderer* renderer = ctx->renderer;
-  SDL_Texture* tileset = ctx->tileset;
-  u8 tileset_tile_count = ctx->tileset_tile_count;
-  u8* map_data = ctx->map_data;
-  u8 map_width = ctx->map_width;
-  u8 map_height = ctx->map_height;
-  u16 map_size = ctx->map_size;
-  u8 tile_width = ctx->tile_width;
-  u8 tile_height = ctx->tile_height;
-  SDL_Rect* tile_src_rect = ctx->tile_src_rect;
-  SDL_Rect* tile_dest_rect = ctx->tile_dest_rect;
+int load_tilemap_from_file(char* filename) {
+  return EXIT_FAILURE;
+}
 
-  SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+void destroy_tilemap() {
+  if (map_bg_data) { free(map_bg_data); map_bg_data = 0; }
+  if (map_mg_data) { free(map_mg_data); map_mg_data = 0; }
+  if (map_fg_data) { free(map_fg_data); map_fg_data = 0; }
+  if (map_xx_data) { free(map_xx_data); map_xx_data = 0; }
+  map_columns = 0;
+  map_rows = 0;
+}
 
-  for (u16 i = 0; i < map_size; i++) {
-    u8 tile_x = i % map_width;
-    u8 tile_y = i / map_width;
-    u8 mg_tile_id = map_data[(map_size * 1) + i];
+void render_tilemap(int target_x, int target_y) {
+  int map_x = target_x / tile_width;
+  int map_y = target_y / tile_height;
+  int off_x = target_x % tile_width;
+  int off_y = target_y % tile_height;
 
-    if (mg_tile_id > 0) {
-      tile_src_rect->x = tile_width * ((mg_tile_id - 1) % tileset_tile_count);
-      tile_src_rect->y = tile_height * ((mg_tile_id - 1) / tileset_tile_count);
-      tile_dest_rect->x = tile_x * tile_width;
-      tile_dest_rect->y = tile_y * tile_height;
-      SDL_RenderCopy(renderer, tileset, tile_src_rect, tile_dest_rect);
+  SDL_Rect dst;
+  dst.w = tile_width;
+  dst.h = tile_height;
+
+  SDL_Rect src;
+  src.w = tile_width;
+  src.h = tile_height;
+
+  int size = cam_width * cam_height;
+
+  SDL_SetRenderDrawBlendMode(main_renderer_ptr, SDL_BLENDMODE_NONE);
+
+  for (int i = 0; i < size; i++) {
+    int column = (i % cam_width);
+    int row = (i / cam_width);
+    int index = (row + map_y) * map_columns + column + map_x;
+    int tile_id = map_bg_data[index];
+    if (tile_id > 0) {
+      src.x = tile_width * (tile_id % game_ptr->tileset_columns);
+      src.y = tile_height * (tile_id / game_ptr->tileset_columns);
+      dst.x = column * tile_width - off_x;
+      dst.y = row * tile_height - off_y;
+      SDL_RenderCopy(main_renderer_ptr, game_ptr->tileset_texture, &src, &dst);
     }
   }
-}
 
-void tilemap_render_ob_layer(struct tilemap_context_t* ctx, struct tilemap_camera_t* camera) {
+  SDL_SetRenderDrawBlendMode(main_renderer_ptr, SDL_BLENDMODE_BLEND);
 
-}
-
-void tilemap_render_fg_layer(struct tilemap_context_t* ctx, struct tilemap_camera_t* camera) {
-  SDL_Renderer* renderer = ctx->renderer;
-  SDL_Texture* tileset = ctx->tileset;
-  u8 tileset_tile_count = ctx->tileset_tile_count;
-  u8* map_data = ctx->map_data;
-  u8 map_width = ctx->map_width;
-  u8 map_height = ctx->map_height;
-  u16 map_size = ctx->map_size;
-  u8 tile_width = ctx->tile_width;
-  u8 tile_height = ctx->tile_height;
-  SDL_Rect* tile_src_rect = ctx->tile_src_rect;
-  SDL_Rect* tile_dest_rect = ctx->tile_dest_rect;
-
-  SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
-
-  for (u16 i = 0; i < map_size; i++) {
-    u8 tile_x = i % map_width;
-    u8 tile_y = i / map_width;
-    u8 fg_tile_id = map_data[(map_size * 2) + i];
-
-    if (fg_tile_id > 0) {
-      tile_src_rect->x = tile_width * ((fg_tile_id - 1) % tileset_tile_count);
-      tile_src_rect->y = tile_height * ((fg_tile_id - 1) / tileset_tile_count);
-      tile_dest_rect->x = tile_x * tile_width;
-      tile_dest_rect->y = tile_y * tile_height;
-      SDL_RenderCopy(renderer, tileset, tile_src_rect, tile_dest_rect);
-    }
-  }
-}
-
-void tilemap_render_xx_layer(struct tilemap_context_t* ctx, struct tilemap_camera_t* camera) {
-  SDL_Renderer* renderer = ctx->renderer;
-  SDL_Texture* tileset = ctx->tileset;
-  u8 tileset_tile_count = ctx->tileset_tile_count;
-  u8* map_data = ctx->map_data;
-  u8 map_width = ctx->map_width;
-  u8 map_height = ctx->map_height;
-  u16 map_size = ctx->map_size;
-  u8 tile_width = ctx->tile_width;
-  u8 tile_height = ctx->tile_height;
-  SDL_Rect* tile_src_rect = ctx->tile_src_rect;
-  SDL_Rect* tile_dest_rect = ctx->tile_dest_rect;
-
-  SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
-
-  for (u16 i = 0; i < map_size; i++) {
-    u8 tile_x = i % map_width;
-    u8 tile_y = i / map_width;
-    u8 xx_tile_id = map_data[(map_size * 3) + i];
-
-    if (xx_tile_id > 0) {
-      tile_dest_rect->x = tile_x * tile_width;
-      tile_dest_rect->y = tile_y * tile_height;
-      SDL_SetRenderDrawColor(renderer, 255, 0, 0, 0x40);
-      SDL_RenderFillRect(renderer, tile_dest_rect);
-    }
-  }
-}
-
-void tilemap_render(struct tilemap_context_t* ctx, struct tilemap_camera_t* camera) {
-  tilemap_render_bg_layer(ctx, camera);
-  tilemap_render_mg_layer(ctx, camera);
-  tilemap_render_ob_layer(ctx, camera);
-  tilemap_render_fg_layer(ctx, camera);
-  tilemap_render_xx_layer(ctx, camera);
+  // for (int row = 0; row < map_rows; row++) {
+  //   for (int column = 0; column < map_columns; column++) {
+  //     int index = (row + map_y) * map_columns + column + map_x;
+  //     int tile_id = map_bg_data[index];
+  //     if (tile_id > 0) {
+  //       src.x = tile_width * (tile_id % game_ptr->tileset_columns);
+  //       src.y = tile_height * (tile_id / game_ptr->tileset_columns);
+  //       dst.x = column * tile_width - off_x;
+  //       dst.y = row * tile_height - off_y;
+  //       SDL_RenderCopy(main_renderer_ptr, game_ptr->tileset_texture, &src, &dst);
+  //     }
+  //   }
+  // }
 }
