@@ -1,6 +1,13 @@
 #include "game.h"
 #include "scenes.h"
 #include "tilemap.h"
+#include "texture_cache.h"
+#include "sprite.h"
+
+struct play_data_t {
+  struct sprite_t* player_sprite;
+};
+struct play_data_t play_data;
 
 void init_play_scene() {
   printf("init_play\n");
@@ -197,12 +204,26 @@ void init_play_scene() {
 
   cam_x = 0;
   cam_y = 0;
+
+  add_texture_to_cache(100, "../../data/testplayersprite.png");
+
+  play_data.player_sprite = sprite_create(100, 32, 64);
+
+  sprite_add_animation(play_data.player_sprite, 0, 4, 12);
+  // sprite_add_animation(play_data.player_sprite, 0, 4, 12);
+  // sprite_add_animation(play_data.player_sprite, 0, 4, 12);
+  // sprite_add_animation(play_data.player_sprite, 0, 4, 12);
+
+  sprite_select_animation(play_data.player_sprite, 0);
+
+  sprite_start_animation(play_data.player_sprite);
+
 }
 
 void destroy_play_scene() {
-  printf("destroy_play - kill tilemap\n");
+  sprite_destroy(&play_data.player_sprite);
+  destroy_texture_cache();
   destroy_tilemap();
-  printf("destroy_play - kill tileset texture\n");
   kill_texture(game_ptr->tileset_texture);
 }
 
@@ -228,10 +249,14 @@ void update_play_scene(float dt) {
   } else if (game_ptr->input.down) {
     cam_y += 4;
   }
+
+  sprite_update_animation(play_data.player_sprite);
 }
 
 void render_play_scene() {
   // printf("render_play\n");
 
   render_tilemap(cam_x, cam_y);
+
+  sprite_render(play_data.player_sprite);
 }
