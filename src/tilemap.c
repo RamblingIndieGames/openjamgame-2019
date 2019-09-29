@@ -214,3 +214,37 @@ void lock_camera_to_pos(int x, int y) {
   cam_y = y - (cam_height_in_pixels / 2);
   lock_camera_to_map();
 }
+
+int tilemap_collision(struct sprite_t* sprite, int offset_x, int offset_y) {
+  // get x, y, w, h of sprite hitbox relative to sprite
+  // get right and bottom of hitbox relative to sprite
+  // apply offset to relative hitbox
+  int x = sprite->world_x + sprite->hitbox_x + offset_x - cam_x;
+  int y = sprite->world_y + sprite->hitbox_y + offset_y - cam_y;
+  int right = x + sprite->hitbox_width;
+  int bottom = y + sprite->hitbox_height;
+
+  // test for collision
+  int map_x = cam_x / tile_width;
+  int map_y = cam_y / tile_height;
+  int off_x = cam_x % tile_width;
+  int off_y = cam_y % tile_height;
+  int size = cam_width * cam_height;
+
+  for (int i = 0; i < size; i++) {
+    int column = (i % cam_width);
+    int row = (i / cam_width);
+    int index = (row + map_y) * map_columns + column + map_x;
+    int tile_id = map_xx_data[index];
+    if (tile_id > 0) {
+      int tile_x = column * tile_width - off_x;
+      int tile_y = row * tile_height - off_y;
+
+      if (!((bottom <= tile_y) || (y >= tile_y + tile_height) || (x >= tile_x + tile_width) || (right <= tile_x))) {
+        return 1;
+      }
+    }
+  }
+
+  return 0;
+}

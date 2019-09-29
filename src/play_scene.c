@@ -209,6 +209,11 @@ void init_play_scene() {
 
   play_data.player_sprite = sprite_create(100, 32, 64);
 
+  play_data.player_sprite->hitbox_width = tile_width - 8;
+  play_data.player_sprite->hitbox_height = tile_height;
+  play_data.player_sprite->hitbox_x = 4;
+  play_data.player_sprite->hitbox_y = tile_height;
+
   play_data.player_sprite->world_x = tile_width * 6;
   play_data.player_sprite->world_y = tile_height * 6;
 
@@ -276,8 +281,26 @@ void update_play_scene(float dt) {
   float motion_x = sprite_mt[sprite_mm[sprite_mcc]] * speed * dt;
   float motion_y = sprite_mt[sprite_mm[sprite_mcc + 1]] * speed * dt;
 
-  player->world_x += motion_x;
-  player->world_y += motion_y;
+  float x_dist = fabs(motion_x);
+  float y_dist = fabs(motion_y);
+
+  #define sign(v)((v > 0) - (v < 0))
+  for (int i = 0; i < x_dist; i++) {
+    int step = sign(motion_x);
+    if (!tilemap_collision(player, step, 0)) {
+      player->world_x += step;
+    }
+  }
+  for (int i = 0; i < y_dist; i++) {
+    int step = sign(motion_y);
+    if (!tilemap_collision(player, 0, step)) {
+      player->world_y += step;
+    }
+  }
+  #undef sign
+
+  // player->world_x += motion_x;
+  // player->world_y += motion_y;
   lock_sprite_to_map(player);
 
   sprite_update_animation(player);
@@ -293,6 +316,7 @@ void render_play_scene() {
   render_tilemap_bg();
   render_tilemap_mg();
   sprite_render(play_data.player_sprite);
+  sprite_render_hitbox(play_data.player_sprite);
   render_tilemap_fg();
   render_tilemap_xx();
 }

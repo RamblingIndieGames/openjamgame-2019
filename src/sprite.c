@@ -113,6 +113,16 @@ void sprite_stop_animation(spr* sprite) {
   }
 }
 
+// int sprite_collision_with_map(spr* sprite, int tile_x, int tile_y) {
+//   // check
+// }
+
+// void sprite_move(spr* sprite, float motion_x, float motion_y) {
+//   sprite->world_x += motion_x;
+//   sprite->world_y += motion_y;
+//   lock_sprite_to_map(sprite);
+// }
+
 void sprite_update_animation(spr* sprite) {
   if (!sprite || sprite->animation_started != 1) {
     // printf("not updating sprite\n");
@@ -174,6 +184,18 @@ void sprite_render(spr* sprite) {
   render_dest_rect.y = sprite->world_y - cam_y;
 
   SDL_RenderCopy(main_renderer_ptr, render_texture, &render_src_rect, &render_dest_rect);
+}
+
+void sprite_render_hitbox(spr* sprite) {
+  static SDL_Rect dst;
+
+  dst.x = sprite->hitbox_x + sprite->world_x - cam_x;
+  dst.y = sprite->hitbox_y + sprite->world_y - cam_y;
+  dst.w = sprite->hitbox_width;
+  dst.h = sprite->hitbox_height;
+
+  SDL_SetRenderDrawColor(main_renderer_ptr, 255, 0, 0, 0xF0);
+  SDL_RenderDrawRect(main_renderer_ptr, &dst);
 }
 
 void sprite_debug_animationlist (spr* sprite) {

@@ -27,5 +27,6 @@ extern void lock_camera_to_map();
 extern void lock_camera_to_pos(int x, int y);
 struct sprite_t;
 extern void lock_sprite_to_map(struct sprite_t* sprite);
+extern int tilemap_collision(struct sprite_t* sprite, int offset_x, int offset_y);
 
 #endif // !__TILEMAP_H__

@@ -61,6 +61,7 @@ extern void sprite_resume_animation(spr* sprite);
 extern void sprite_stop_animation(spr* sprite);
 extern void sprite_update_animation(spr* sprite);
 extern void sprite_render(spr* sprite);
+extern void sprite_render_hitbox(spr* sprite);
 extern void sprite_debug_animationlist (spr* sprite);
 
 #endif // !__SPRITE_H__
