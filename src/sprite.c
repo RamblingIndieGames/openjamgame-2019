@@ -40,6 +40,8 @@ spr* sprite_create(int texture_id, int frame_width, int frame_height) {
   sprite->animation_loop = 1;
   sprite->animation_index = -1;
 
+  sprite->hp = 100;
+
   return sprite;
 }
 
@@ -245,6 +247,35 @@ spr* sprite_collision_against_sprite_in_list(spr* sprite, spr** list, int list_c
     int b2 = y2 + h2;
 
     if (!((b1 <= y2) || (y1 >= y2 + h2) || (x1 >= x2 + w2) || (r1 <= x2))) {
+      return sprite_b;
+    }
+  }
+
+  return 0;
+}
+
+spr* rect_collision_against_sprite_in_list(int x, int y, int w, int h, spr** list, int list_count) {
+  if (!list || !list_count) {
+    return 0;
+  }
+
+  int r1 = x + w;
+  int b1 = y + h;
+
+  for (int i = 0; i < list_count; i++) {
+    spr* sprite_b = list[i];
+    if (!sprite_b) {
+      return 0;
+    }
+
+    int x2 = sprite_b->hitbox_x + sprite_b->world_x - cam_x;
+    int y2 = sprite_b->hitbox_y + sprite_b->world_y - cam_y;
+    int w2 = sprite_b->hitbox_width;
+    int h2 = sprite_b->hitbox_height;
+    int r2 = x2 + w2;
+    int b2 = y2 + h2;
+
+    if (!((b1 <= y2) || (y >= y2 + h2) || (x >= x2 + w2) || (r1 <= x2))) {
       return sprite_b;
     }
   }

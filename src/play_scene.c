@@ -309,14 +309,31 @@ void update_play_scene(float dt) {
 
   // (!((bottom <= tile_y) || (y >= tile_y + tile_height) || (x >= tile_x + tile_width) || (right <= tile_x)))
 
-  // if (play_data.sword_active) {
-    struct sprite_t* list[] = { play_data.slime_sprite };
-    struct sprite_t* hit = sprite_collision_against_sprite_in_list(player, list, 1);
+  struct sprite_t* list[] = { play_data.slime_sprite };
+  struct sprite_t* hit = 0;
+  if (play_data.sword_active) {
+    int x,y,w,h;
+    x = play_data.sword_hitbox.x - cam_x;
+    y = play_data.sword_hitbox.y - cam_y;
+    w = play_data.sword_hitbox.w;
+    h = play_data.sword_hitbox.h;
+    hit = rect_collision_against_sprite_in_list(x, y, w, h, list, 1);
     if (hit && hit->state != 1) {
       sprite_select_animation(hit, ID_SLIME_HURT);
       hit->state = 1;
+      hit->hp -= 25;
+      if (hit->hp <= 0) {
+        hit->state = 0xdead;
+        hit->render_alpha = 0;
+      }
     }
-  // }
+  }
+  hit = 0;
+  hit = sprite_collision_against_sprite_in_list(player, list, 1);
+  if (hit && hit->state != 1) {
+    sprite_select_animation(hit, ID_SLIME_HURT);
+    hit->state = 1;
+  }
 
   // enemy hurt
   if (play_data.slime_sprite->state == 1) {
