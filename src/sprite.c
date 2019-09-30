@@ -1,3 +1,4 @@
+#include <string.h>
 #include "game.h"
 #include "sprite.h"
 #include "texture_cache.h"
@@ -216,4 +217,66 @@ void sprite_debug_animationlist (spr* sprite) {
     printf("\t[%03d] { start: %3d count: %3d timeout: %3d }\n", i, start, count, timeout);
   }
   printf("\n");
+}
+
+spr* sprite_collision_against_sprite_in_list(spr* sprite, spr** list, int list_count) {
+  if (!sprite || !list || !list_count) {
+    return 0;
+  }
+
+  int x1 = sprite->hitbox_x + sprite->world_x - cam_x;
+  int y1 = sprite->hitbox_y + sprite->world_y - cam_y;
+  int w1 = sprite->hitbox_width;
+  int h1 = sprite->hitbox_height;
+  int r1 = x1 + w1;
+  int b1 = y1 + h1;
+
+  for (int i = 0; i < list_count; i++) {
+    spr* sprite_b = list[i];
+    if (!sprite_b) {
+      return 0;
+    }
+
+    int x2 = sprite_b->hitbox_x + sprite_b->world_x - cam_x;
+    int y2 = sprite_b->hitbox_y + sprite_b->world_y - cam_y;
+    int w2 = sprite_b->hitbox_width;
+    int h2 = sprite_b->hitbox_height;
+    int r2 = x2 + w2;
+    int b2 = y2 + h2;
+
+    if (!((b1 <= y2) || (y1 >= y2 + h2) || (x1 >= x2 + w2) || (r1 <= x2))) {
+      return sprite_b;
+    }
+  }
+
+  return 0;
+}
+
+void get_hitbox_center(spr* sprite, int* x, int* y) {
+  *x = sprite->world_x + sprite->hitbox_x + (sprite->hitbox_width / 2) - cam_x;
+  *y = sprite->world_y + sprite->hitbox_y + (sprite->hitbox_height / 2) - cam_y;
+}
+
+int compare_sprites(spr* a, spr* b) {
+  if (a->z_depth != b->z_depth) {
+    return a->z_depth > b->z_depth;
+  }
+  int acy, bcy, x;
+  get_hitbox_center(a, &x, &acy);
+  get_hitbox_center(b, &x, &bcy);
+  return acy - bcy;
+}
+
+void sort_sprites(spr** list, int list_count) {
+  spr* sprite_sort_k;
+  int i = 1, j = 0;
+  for (i = 1; i < list_count; i++) {
+    sprite_sort_k = list[i];
+    j = i - 1;
+    while (j >= 0 && compare_sprites(list[j], sprite_sort_k) > 0) {
+      list[j + 1] = list[j];
+      j--;
+    }
+    list[j + 1] = sprite_sort_k;
+  }
 }

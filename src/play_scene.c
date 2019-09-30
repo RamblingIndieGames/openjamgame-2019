@@ -32,6 +32,9 @@
 #define ID_PLAYER_IDLE_SOUTH 10
 #define ID_PLAYER_IDLE_WEST 11
 
+#define ID_SLIME_IDLE 0
+#define ID_SLIME_HURT 1
+
 // direction facing
 #define DIR_EAST 0
 #define DIR_NORTH 1
@@ -53,10 +56,45 @@
 
 struct play_data_t {
   struct sprite_t* player_sprite;
-  struct sprite_t* player_sword_sprite;
+  SDL_Rect sword_hitbox;
+  int sword_active;
   struct sprite_t* slime_sprite;
 };
 struct play_data_t play_data;
+
+void update_sword_hitbox() {
+  struct sprite_t* player = play_data.player_sprite;
+  SDL_Rect* sword = &play_data.sword_hitbox;
+
+  // E N S W
+  static int shift_x[] = { 32, 10, 0, -32 };
+  static int shift_y[] = { -10, -24, 32, -10 };
+
+  int player_center_x = player->world_x + (player->render_frame_width / 2);
+  int player_center_y = player->world_y + (player->render_frame_height / 2);
+
+  sword->x = player_center_x - sword->w / 2;
+  sword->y = player_center_y - sword->h / 2;
+
+  sword->x += shift_x[player->direction];
+  sword->y += shift_y[player->direction];
+}
+
+void render_sword_hitbox() {
+  if (!play_data.sword_active) {
+    return;
+  }
+
+  static SDL_Rect dst;
+
+  dst.x = play_data.sword_hitbox.x - cam_x;
+  dst.y = play_data.sword_hitbox.y - cam_y;
+  dst.w = play_data.sword_hitbox.w;
+  dst.h = play_data.sword_hitbox.h;
+
+  SDL_SetRenderDrawColor(main_renderer_ptr, 0, 128, 255, 0xF0);
+  SDL_RenderDrawRect(main_renderer_ptr, &dst);
+}
 
 void init_play_scene() {
   printf("init_play\n");
@@ -81,8 +119,8 @@ void init_play_scene() {
   play_data.slime_sprite->world_y = tile_height * 10;
 
   sprite_add_animation(play_data.slime_sprite, 0, 4, 24);
-  sprite_add_animation(play_data.slime_sprite, 3, 2, 1);
-  sprite_select_animation(play_data.slime_sprite, 0);
+  sprite_add_animation(play_data.slime_sprite, 3, 2, 2);
+  sprite_select_animation(play_data.slime_sprite, ID_SLIME_IDLE);
   sprite_start_animation(play_data.slime_sprite);
 
   add_texture_to_cache(ID_PLAYER_TEXTURE, "../../data/playersheet.png");
@@ -116,19 +154,11 @@ void init_play_scene() {
   play_data.player_sprite->direction = DIR_SOUTH;
   play_data.player_sprite->flags = FLG_WALK_ENABLED;
 
+  play_data.sword_hitbox.w = tile_width;
+  play_data.sword_hitbox.h = tile_height;
+
   sprite_start_animation(play_data.player_sprite);
 }
-
-void update_player_animation() {
-  struct sprite_t* player = play_data.player_sprite;
-  // state:
-  // 0 - idle
-  // 1 - walk
-  // 2 - attack
-
-
-}
-
 
 void destroy_play_scene() {
   sprite_destroy(&play_data.slime_sprite);
@@ -210,12 +240,18 @@ void update_play_scene(float dt) {
     if (player->animation_frame_time == player->animation_frame_timeout - 1) {
       // create sword collider
       printf("create sword\n");
+      play_data.sword_active = 1;
       // enable walk
       player->flags |= FLG_WALK_ENABLED;
       player->state = ST_IDLE;
     } else if (!player->animation_frame_time) {
       // play attack sfx
     }
+  }
+
+  if (play_data.sword_active && walk_enabled) {
+    play_data.sword_active = 0;
+    printf("sword inactive\n");
   }
 
   if (walk_enabled) {
@@ -262,6 +298,35 @@ void update_play_scene(float dt) {
   lock_camera_to_pos(player_center_x, player_center_y);
 
   sprite_update_animation(play_data.slime_sprite);
+
+  update_sword_hitbox();
+
+  // check sword collisions
+  // TODO: sprite list...
+
+  // sprite_collision_against_sprite_in_list(spr* sprite, spr** list, int list_count)
+
+
+  // (!((bottom <= tile_y) || (y >= tile_y + tile_height) || (x >= tile_x + tile_width) || (right <= tile_x)))
+
+  // if (play_data.sword_active) {
+    struct sprite_t* list[] = { play_data.slime_sprite };
+    struct sprite_t* hit = sprite_collision_against_sprite_in_list(player, list, 1);
+    if (hit && hit->state != 1) {
+      sprite_select_animation(hit, ID_SLIME_HURT);
+      hit->state = 1;
+    }
+  // }
+
+  // enemy hurt
+  if (play_data.slime_sprite->state == 1) {
+    play_data.slime_sprite->timer++;
+    if (play_data.slime_sprite->timer == 10) {
+      play_data.slime_sprite->timer = 0;
+      sprite_select_animation(play_data.slime_sprite, ID_SLIME_IDLE);
+      play_data.slime_sprite->state = 0;
+    }
+  }
 }
 
 void render_play_scene() {
@@ -269,11 +334,25 @@ void render_play_scene() {
 
   render_tilemap_bg();
   render_tilemap_mg();
-  sprite_render(play_data.player_sprite);
 
-  sprite_render(play_data.slime_sprite);
+  spr* sprite_list[] = {
+    play_data.player_sprite,
+    play_data.slime_sprite
+  };
+  int sprite_list_count = 2;
+  sort_sprites(sprite_list, sprite_list_count);
+
+  for (int i = 0; i < sprite_list_count; i++) {
+    sprite_render(sprite_list[i]);
+  }
+
+  // sprite_render(play_data.player_sprite);
+
+  // sprite_render(play_data.slime_sprite);
   sprite_render_hitbox(play_data.slime_sprite);
   sprite_render_hitbox(play_data.player_sprite);
   render_tilemap_fg();
   render_tilemap_xx();
+
+  render_sword_hitbox();
 }

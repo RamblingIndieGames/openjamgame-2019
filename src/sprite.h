@@ -9,6 +9,7 @@ struct sprite_t {
   unsigned int state;
   int direction;
   int flags;
+  int timer;
 
   int angle_deg;
 
@@ -71,5 +72,9 @@ extern void sprite_update_animation(spr* sprite);
 extern void sprite_render(spr* sprite);
 extern void sprite_render_hitbox(spr* sprite);
 extern void sprite_debug_animationlist (spr* sprite);
+
+extern spr* sprite_collision_against_sprite_in_list(spr* sprite, spr** list, int list_count);
+
+extern void sort_sprites(spr** list, int list_count);
 
 #endif // !__SPRITE_H__
