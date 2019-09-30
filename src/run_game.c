@@ -53,28 +53,36 @@ int run_game(struct game_t* game) {
       if (event.type == SDL_QUIT) {
         quit_game();
       } else if (event.type == SDL_KEYDOWN) {
-        if (event.key.keysym.scancode == SDL_SCANCODE_W || event.key.keysym.scancode == SDL_SCANCODE_UP) {
-          game->input.up = 1;
-        } else if (event.key.keysym.scancode == SDL_SCANCODE_S || event.key.keysym.scancode == SDL_SCANCODE_DOWN) {
-          game->input.down = 1;
-        } else if (event.key.keysym.scancode == SDL_SCANCODE_A || event.key.keysym.scancode == SDL_SCANCODE_LEFT) {
-          game->input.left = 1;
-        } else if (event.key.keysym.scancode == SDL_SCANCODE_D || event.key.keysym.scancode == SDL_SCANCODE_RIGHT) {
-          game->input.right = 1;
-        } else if (event.key.keysym.scancode == SDL_SCANCODE_Q) {
-          game->input.quit_game = 1;
+        SDL_Scancode code = event.key.keysym.scancode;
+        int value = 1;
+        if (code == SDL_SCANCODE_W || code == SDL_SCANCODE_UP) {
+          game->input.up = value;
+        } else if (code == SDL_SCANCODE_S || code == SDL_SCANCODE_DOWN) {
+          game->input.down = value;
+        } else if (code == SDL_SCANCODE_A || code == SDL_SCANCODE_LEFT) {
+          game->input.left = value;
+        } else if (code == SDL_SCANCODE_D || code == SDL_SCANCODE_RIGHT) {
+          game->input.right = value;
+        } else if (code == SDL_SCANCODE_Q) {
+          game->input.quit_game = value;
+        } else if (code == SDL_SCANCODE_SPACE || code == SDL_SCANCODE_Z) {
+          game->input.primary_action = value;
         }
       } else if (event.type == SDL_KEYUP) {
-        if (event.key.keysym.scancode == SDL_SCANCODE_W || event.key.keysym.scancode == SDL_SCANCODE_UP) {
-          game->input.up = 0;
-        } else if (event.key.keysym.scancode == SDL_SCANCODE_S || event.key.keysym.scancode == SDL_SCANCODE_DOWN) {
-          game->input.down = 0;
-        } else if (event.key.keysym.scancode == SDL_SCANCODE_A || event.key.keysym.scancode == SDL_SCANCODE_LEFT) {
-          game->input.left = 0;
-        } else if (event.key.keysym.scancode == SDL_SCANCODE_D || event.key.keysym.scancode == SDL_SCANCODE_RIGHT) {
-          game->input.right = 0;
-        } else if (event.key.keysym.scancode == SDL_SCANCODE_Q) {
-          game->input.quit_game = 0;
+        SDL_Scancode code = event.key.keysym.scancode;
+        int value = 0;
+        if (code == SDL_SCANCODE_W || code == SDL_SCANCODE_UP) {
+          game->input.up = value;
+        } else if (code == SDL_SCANCODE_S || code == SDL_SCANCODE_DOWN) {
+          game->input.down = value;
+        } else if (code == SDL_SCANCODE_A || code == SDL_SCANCODE_LEFT) {
+          game->input.left = value;
+        } else if (code == SDL_SCANCODE_D || code == SDL_SCANCODE_RIGHT) {
+          game->input.right = value;
+        } else if (code == SDL_SCANCODE_Q) {
+          game->input.quit_game = value;
+        } else if (code == SDL_SCANCODE_SPACE || code == SDL_SCANCODE_Z) {
+          game->input.primary_action = value;
         }
       } else if (event.type == SDL_WINDOWEVENT) {
         if (event.window.event == SDL_WINDOWEVENT_HIDDEN || event.window.event == SDL_WINDOWEVENT_MINIMIZED) {

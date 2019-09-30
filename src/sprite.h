@@ -6,7 +6,13 @@ extern float* sprite_mt;
 struct sprite_t {
   unsigned int id;
 
+  unsigned int state;
+  int direction;
+  int flags;
+
   int angle_deg;
+
+  int z_depth;
 
   float world_x;
   float world_y;
